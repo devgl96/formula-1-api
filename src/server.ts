@@ -49,6 +49,23 @@ const drivers = [
     },
 ];
 
+interface TeamsProps {
+    name: string;
+    base: string;
+}
+
+interface DriversProps {
+    id?: string;
+    name: string;
+    team: string;
+    nationality: string;
+    driverNumber: number;
+}
+
+type ParamsProps = {
+    id: string;
+}
+
 server.get("/teams", async (request, response) => {
     response.type("application/json").code(200);
 
@@ -59,6 +76,91 @@ server.get("/teams", async (request, response) => {
         }
     ]
 });
+
+server.get<{ Params: ParamsProps }>("/teams/:id", async (request, response) => {
+    const { id } = request.params;
+
+    const teamById = teams.find(team => team.id === Number(id));
+
+    if (teamById) {
+        return response.code(200).send({
+            message: "Team found!",
+            team: teamById
+        });
+    }
+
+    return response.code(404).send({
+        error: "Team not found!"
+    });
+})
+
+server.post<{ Body: TeamsProps }>("/teams", async (request, response) => {
+    const { base, name } = request.body;
+
+    if (!base.length || !name.length) {
+        return response.code(400).send({
+            error: "Missing required fields!"
+        })
+    }
+
+    const newTeam = {
+        base,
+        name
+    };
+
+    teams.push({
+        id: teams.length + 1,
+        ...newTeam
+    });
+
+    return response.code(200).send({
+        message: "Team created!",
+        team: newTeam
+    });
+})
+
+server.put<{ Params: ParamsProps, Body: TeamsProps }>("/teams/:id", async (request, response) => {
+    const { id } = request.params;
+    const { base, name } = request.body;
+
+    const indexTeam = teams.findIndex(team => team.id === Number(id));
+
+    if (indexTeam === -1) {
+        return response.code(404).send({
+            error: "Team not found!"
+        });
+    }
+
+    teams[indexTeam] = {
+        ...teams[indexTeam],
+        base: base || teams[indexTeam].base,
+        name: name || teams[indexTeam].name,
+    };
+
+    return response.code(200).send({
+        message: "Team updated",
+        team: teams[indexTeam]
+    });
+})
+
+server.delete<{ Params: ParamsProps }>("/teams/:id", async (request, response) => {
+    const { id } = request.params;
+
+    const teamIndexById = teams.findIndex(team => team.id === Number(id));
+
+    if (teamIndexById === -1) {
+        return response.code(404).send({
+            error: "Team not found!",
+        });
+    }
+
+    const deletedTeam = teams.splice(teamIndexById, 1);
+
+    return response.code(200).send({
+        message: "Team deleted!",
+        team: deletedTeam[0]
+    });
+})
 
 server.get("/drivers", async (request, response) => {
     response.type("application/json").code(200);
@@ -71,19 +173,7 @@ server.get("/drivers", async (request, response) => {
     ]
 })
 
-interface DriversProps {
-    id?: string;
-    name: string;
-    team: string;
-    nationality: string;
-    driverNumber: number;
-}
-
-type ParamsDriver = {
-    id: string;
-}
-
-server.get<{ Params: ParamsDriver }>("/drivers/:id", async (request, response) => {
+server.get<{ Params: ParamsProps }>("/drivers/:id", async (request, response) => {
     const id = Number(request.params.id);
 
     const foundDriver = drivers.find(driver => driver.id === id);
@@ -127,7 +217,7 @@ server.post<{ Body: DriversProps }>("/drivers", async (request, response) => {
     };
 })
 
-server.put<{ Params: ParamsDriver, Body: DriversProps }>("/drivers/:id", async (request, response) => {
+server.put<{ Params: ParamsProps, Body: DriversProps }>("/drivers/:id", async (request, response) => {
     const { id } = request.params;
     const { team, driverNumber, name, nationality } = request.body;
 
@@ -148,7 +238,7 @@ server.put<{ Params: ParamsDriver, Body: DriversProps }>("/drivers/:id", async (
     return { message: "Driver updated", driver: drivers[driverIndex] };
 })
 
-server.delete<{ Params: ParamsDriver }>("/drivers/:id", async (request, response) => {
+server.delete<{ Params: ParamsProps }>("/drivers/:id", async (request, response) => {
     const id = Number(request.params.id);
 
     const driverIndex = drivers.findIndex(driver => driver.id === id);
