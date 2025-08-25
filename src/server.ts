@@ -144,6 +144,23 @@ server.put<{ Params: ParamsDriver, Body: DriversProps }>("/drivers/:id", async (
     return { driver: drivers[driverIndex] };
 })
 
+server.delete<{ Params: ParamsDriver }>("/drivers/:id", async (request, response) => {
+    const id = Number(request.params.id);
+
+    const driverIndex = drivers.findIndex(driver => driver.id === id);
+
+    if (driverIndex === -1) {
+        return response.type("application/json").code(404).send({ error: "Driver not found" });
+    }
+
+    const deletedDriver = drivers.splice(driverIndex, 1);
+
+    return {
+        message: "Driver deleted",
+        driver: deletedDriver[0]
+    };
+})
+
 server.listen({
     port: 3333
 }, () => {
