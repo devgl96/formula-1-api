@@ -99,7 +99,7 @@ server.get<{ Params: ParamsDriver }>("/drivers/:id", async (request, response) =
     response.type("application/json").code(200);
 
     return {
-        message: "Driver found!"
+        message: "Driver found!",
         driver: foundDriver
     };
 })
