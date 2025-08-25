@@ -123,6 +123,26 @@ server.post<{ Body: DriversProps }>("/drivers", async (request, response) => {
     };
 })
 
+server.put<{ Params: ParamsDriver, Body: DriversProps }>("/drivers/:id", async (request, response) => {
+    const { id } = request.params;
+    const { team, driverNumber, name, nationality } = request.body;
+
+    const driverIndex = drivers.findIndex(searchDriver => searchDriver.id === Number(id));
+
+    if (driverIndex === -1) {
+        return response.code(404).send({ error: "Driver not found" });
+    }
+
+    drivers[driverIndex] = {
+        ...drivers[driverIndex],
+        name: name || drivers[driverIndex].name,
+        nationality: nationality || drivers[driverIndex].nationality,
+        team: team || drivers[driverIndex].team,
+        driverNumber: driverNumber || drivers[driverIndex].driverNumber,
+    };
+
+    return { driver: drivers[driverIndex] };
+})
 
 server.listen({
     port: 3333
