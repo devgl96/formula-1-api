@@ -1,4 +1,4 @@
-# Estrutura de Projeto Fastify + TypeScript (API de Fórmula 1)
+# 🏁API de Fórmula 1
 
 Este projeto é um exemplo de como organizar uma API usando **Fastify**
 com **TypeScript**, aplicando boas práticas de estruturação de pastas e
