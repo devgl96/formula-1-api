@@ -4,7 +4,7 @@ import cors from "@fastify/cors";
 const server = fastify({ logger: true });
 
 server.register(cors, {
-    origin: "*", 
+    origin: "*",
 });
 
 const teams = [
@@ -29,17 +29,23 @@ const drivers = [
     {
         id: 1,
         name: "Max Verstappen",
-        team: "Red Bull Racing"
+        team: "Red Bull Racing",
+        nationality: "Netherlands",
+        driverNumber: 1
     },
     {
         id: 2,
         name: "Lewis Hamilton",
-        team: "Mercedes"
+        team: "Ferrari",
+        nationality: "United Kingdom",
+        driverNumber: 44,
     },
     {
-        id: 2,
+        id: 3,
         name: "Lando Norris",
-        team: "Mclaren"
+        team: "Mclaren",
+        nationality: "United Kingdom",
+        driverNumber: 4
     },
 ];
 
@@ -63,11 +69,19 @@ server.get("/drivers", async (request, response) => {
     ]
 })
 
-interface DriversParams {
+interface DriversProps {
+    id?: string;
+    name: string;
+    team: string;
+    nationality: string;
+    driverNumber: number;
+}
+
+type ParamsDriver = {
     id: string;
 }
 
-server.get<{ Params: DriversParams }>("/drivers/:id", async (request, response) => {
+server.get<{ Params: ParamsDriver }>("/drivers/:id", async (request, response) => {
     const id = Number(request.params.id);
 
     const foundDriver = drivers.find(driver => driver.id === id);
@@ -86,6 +100,29 @@ server.get<{ Params: DriversParams }>("/drivers/:id", async (request, response) 
         driver: foundDriver
     };
 })
+
+server.post<{ Body: DriversProps }>("/drivers", async (request, response) => {
+    const { name, nationality, team, driverNumber } = request.body;
+
+    if (!name || !nationality || !team || !driverNumber) {
+        response.code(400).send({ error: "Missing required fields " });
+    }
+
+    const newDriver = {
+        id: drivers.length + 1,
+        name,
+        nationality,
+        team,
+        driverNumber
+    };
+
+    drivers.push(newDriver);
+
+    return {
+        driver: newDriver
+    };
+})
+
 
 server.listen({
     port: 3333
