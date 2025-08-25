@@ -54,6 +54,7 @@ server.get("/teams", async (request, response) => {
 
     return [
         {
+            message: "All teams",
             teams
         }
     ]
@@ -64,6 +65,7 @@ server.get("/drivers", async (request, response) => {
 
     return [
         {
+            message: "All drivers",
             drivers
         }
     ]
@@ -97,6 +99,7 @@ server.get<{ Params: ParamsDriver }>("/drivers/:id", async (request, response) =
     response.type("application/json").code(200);
 
     return {
+        message: "Driver found!"
         driver: foundDriver
     };
 })
@@ -119,6 +122,7 @@ server.post<{ Body: DriversProps }>("/drivers", async (request, response) => {
     drivers.push(newDriver);
 
     return {
+        message: "New driver added",
         driver: newDriver
     };
 })
@@ -141,7 +145,7 @@ server.put<{ Params: ParamsDriver, Body: DriversProps }>("/drivers/:id", async (
         driverNumber: driverNumber || drivers[driverIndex].driverNumber,
     };
 
-    return { driver: drivers[driverIndex] };
+    return { message: "Driver updated", driver: drivers[driverIndex] };
 })
 
 server.delete<{ Params: ParamsDriver }>("/drivers/:id", async (request, response) => {
