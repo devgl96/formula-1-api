@@ -1,81 +1,194 @@
-<div align="center">
+# Estrutura de Projeto Fastify + TypeScript (API de Fórmula 1)
 
-  <img src="./.github/assets/blue-saiyan-bg.png" alt="Logo" height="200">
-  <h1 align="center"><strong>NODE BOILERPLATE - BLUE EDITION</strong></h1>
-  <p align="center">
-	  Don't start a new Node project from zero!<br> Use this simple <b>Nodejs</b> boilerplate with pre-configured <b>Typescript</b> in a modern way.
-  </p>
+Este projeto é um exemplo de como organizar uma API usando **Fastify**
+com **TypeScript**, aplicando boas práticas de estruturação de pastas e
+modularização.
 
-</div>
+------------------------------------------------------------------------
 
-<br />
+## Exemplo de Modelos (Models)
 
-  <!-- Badges -->
-<div align="center">
-  
-  [![TypeScript version][ts-badge]][typescript-5-4]
-  [![Node.js version][nodejs-badge]][nodejs]
+### `models/Driver.ts`
 
-</div>
-
-# 🚀 Technologies
-
-This code source was developed with the following items:
-
-### 📦 Dependencies
-
-- [typescript][typescript-npm] - Superset for application scale JavaScript development
-- [tsx][tsx-npm] - TypeScript Execute (tsx): Enable Node.js to run TypeScript
-- [tsup][tsup-npm] - Bundle your TypeScript library with no config, powered by esbuild
-- [@types/node][@types/node-npm] - type definitions for node
-
-### 📄 Files
-
-- `.gitignore` - Ignore folders like node_modules
-- `.env` - Enviroment variables
-- `tsconfig.json` - Typescript configure Options
-
-### ⚡ Scripts
-
-- `npm run dist`: Compiles TypeScript files to JavaScript in the dist directory.
-- `npm run start:dev`: Runs the server in development mode with environment variables loaded from the .env file.
-- `npm run start:watch`: Runs the server in development mode with support for automatic reload on file changes.
-- `npm run start:dist`: Compiles the project and runs the compiled version from the dist directory.
-
-# 👨‍💻 How To Use
-
-click in **[Use this template]** OR
-
-To clone and run this application, you'll need [Git](https://git-scm.com), [Node.js v20+](https://nodejs.org/en/) + [NPM v10+](https://nodejs.org/en/) installed on your computer. From your command line:
-
-```bash
-# Clone this repository
-$ git clone https://github.com/felipeAguiarCode/node-blue-boilerplate
-
-# Go into the repository
-$ cd node-blue-boilerplate
-
-# Install dependencies
-$ npm install
+``` ts
+export interface Driver {
+  id: number;
+  name: string;
+  team: string;
+  nationality: string;
+}
 ```
 
-## Author
+### `models/Team.ts`
 
-| [<img src="https://avatars3.githubusercontent.com/u/37452836?s=96&v=4"><br><sub>Felipe Aguiar</sub>](https://github.com/felipeAguiarCode) |
-| :---------------------------------------------------------------------------------------------------------------------------------------: |
-|                                            [Linkedin](www.linkedin.com/in/felipe-aguiar-exe/)                                             |
+``` ts
+export interface Team {
+  id: number;
+  name: string;
+  base: string;
+}
+```
 
-# Credits
+### `models/Race.ts`
 
-icons by [Pino Lamanna][dribble-icon]
+``` ts
+export interface Race {
+  id: number;
+  location: string;
+  date: string;
+}
+```
 
-[typescript]: https://www.typescriptlang.org/
-[typescript-5-4]: https://www.typescriptlang.org/
-[ts-badge]: https://img.shields.io/badge/TypeScript-5.4-blue.svg
-[nodejs-badge]: https://img.shields.io/badge/Node.js->=%2020.00-blue.svg
-[nodejs]: https://nodejs.org/
-[dribble-icon]: https://dribbble.com/Schakalwal
-[typescript-npm]: https://www.npmjs.com/package/typescript
-[tsx-npm]: https://www.npmjs.com/package/tsx
-[tsup-npm]: https://www.npmjs.com/package/tsup
-[@types/node-npm]: https://www.npmjs.com/package/@types/node
+------------------------------------------------------------------------
+
+## Exemplo de Serviços (Services)
+
+### `services/driversService.ts`
+
+``` ts
+import { Driver } from "../models/Driver";
+
+const drivers: Driver[] = [
+  { id: 1, name: "Lewis Hamilton", team: "Mercedes", nationality: "British" },
+  { id: 2, name: "Max Verstappen", team: "Red Bull", nationality: "Dutch" },
+];
+
+export const getDrivers = (): Driver[] => drivers;
+
+export const getDriverById = (id: number): Driver | undefined =>
+  drivers.find(driver => driver.id === id);
+```
+
+------------------------------------------------------------------------
+
+## Exemplo de Controllers
+
+### `controllers/driversController.ts`
+
+``` ts
+import { FastifyReply, FastifyRequest } from "fastify";
+import * as driverService from "../services/driversService";
+
+export const getDrivers = async (req: FastifyRequest, reply: FastifyReply) => {
+  const drivers = driverService.getDrivers();
+  reply.send(drivers);
+};
+
+export const getDriverById = async (req: FastifyRequest, reply: FastifyReply) => {
+  const { id } = req.params as { id: string };
+  const driver = driverService.getDriverById(Number(id));
+  if (!driver) {
+    reply.status(404).send({ message: "Driver not found" });
+  } else {
+    reply.send(driver);
+  }
+};
+```
+
+------------------------------------------------------------------------
+
+## Exemplo de Rotas
+
+### `routes/driversRoutes.ts`
+
+``` ts
+import { FastifyInstance } from "fastify";
+import * as driversController from "../controllers/driversController";
+
+export default async function driverRoutes(fastify: FastifyInstance) {
+  fastify.get("/drivers", driversController.getDrivers);
+  fastify.get("/drivers/:id", driversController.getDriverById);
+}
+```
+
+------------------------------------------------------------------------
+
+## Configuração do Servidor
+
+### `app.ts`
+
+``` ts
+import Fastify from "fastify";
+import driverRoutes from "./routes/driversRoutes";
+
+const app = Fastify();
+
+app.register(driverRoutes);
+
+export default app;
+```
+
+### `server.ts`
+
+``` ts
+import app from "./app";
+
+const start = async () => {
+  try {
+    await app.listen({ port: 3000 });
+    console.log("🚀 Server running at http://localhost:3000");
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
+};
+
+start();
+```
+
+------------------------------------------------------------------------
+
+## Scripts no `package.json`
+
+``` json
+"scripts": {
+  "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js"
+}
+```
+
+------------------------------------------------------------------------
+
+## Execução do Projeto
+
+1.  Instale as dependências:
+
+    ``` bash
+    npm install fastify ts-node-dev typescript @types/node
+    ```
+
+2.  Inicie em modo desenvolvimento:
+
+    ``` bash
+    npm run dev
+    ```
+
+3.  Compile o projeto:
+
+    ``` bash
+    npm run build
+    ```
+
+4.  Rode em produção:
+
+    ``` bash
+    npm start
+    ```
+
+------------------------------------------------------------------------
+
+## Endpoints Atuais
+### Drivers
+-   `GET /drivers` → lista todos os pilotos
+-   `GET /drivers/:id` → retorna informações de um piloto específico
+-   `POST /drivers` → adiciona um novo piloto
+-   `PUT /drivers/:id` → atualiza informações de um piloto
+-   `DELETE /drivers/:id` → remove um piloto
+
+### Teams
+-   `GET /teams` → lista todas as equipes
+-   `GET /teams/:id` → retorna informações de um equipe específico
+-   `POST /teams` → adiciona um novo equipe
+-   `PUT /teams/:id` → atualiza informações de um equipe
+-   `DELETE /teams/:id` → remove um equipe
